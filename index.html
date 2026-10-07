@@ -116,7 +116,7 @@ const $=id=>document.getElementById(id);
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- Lời chúc ---------- */
-const DEF={name:"Giang Pham",age:"21",from:"Minhy",
+const DEF={name:"Giang Pham",age:"21",from:"",
 msg:"Hellu người sinh nhật cùng tháng\n\nHy vọng em có một ngày sinh nhật thật là ý nghĩa và cảm thấy mình được yêu thương. Bởi vì em được yêu thương thật, Chúa yêu em và những người Ngài đặt xung quanh em cũng yêu thương em...\n\nHave a blessed 21"};
 const KEY="bday-giang-21";let st={...DEF};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st={...st,...s}}catch(e){}
