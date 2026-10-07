@@ -50,10 +50,18 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 
 /* Controls */
 .ctrl{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;gap:8px}
-.player{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;width:min(calc(100% - 32px),340px)}
+.player{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;align-items:flex-end;gap:10px}
+.pbox{width:min(calc(100vw - 86px),320px);transition:opacity .35s,transform .35s}
+.mbtn{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,220,230,.4);background:rgba(60,25,45,.6);color:#ffe3ea;font-size:1.2rem;cursor:pointer;backdrop-filter:blur(8px);display:grid;place-items:center}
+.mbtn.on{animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .player iframe{display:block;width:100%;height:80px;border:0;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .player .sp{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
-@media (max-width:640px){.player{bottom:calc(66px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:640px){.player:not(.open) .pbox{opacity:0;transform:translateY(8px);pointer-events:none}}
+@media (min-width:641px){.player.closed .pbox{opacity:0;transform:translateY(8px);pointer-events:none}}
+.hint{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:5;font:500 .85rem var(--f-ui);color:#ffe3ea;background:rgba(60,25,45,.6);border:1px solid rgba(255,220,230,.35);border-radius:999px;padding:8px 16px;backdrop-filter:blur(8px);animation:pulse 2.4s ease-in-out infinite;transition:opacity .8s;pointer-events:none;white-space:nowrap}
+.hint.gone{opacity:0}
+@keyframes pulse{50%{opacity:.55}}
 .pill{font:500 .88rem var(--f-ui);border:1px solid rgba(255,220,230,.35);border-radius:999px;padding:10px 16px;cursor:pointer;background:rgba(60,25,45,.55);color:#ffe3ea;backdrop-filter:blur(8px)}
 .btn{font:600 1rem var(--f-ui);border:0;border-radius:999px;padding:11px 20px;cursor:pointer;background:var(--rose);color:#fff}
 .ghost{font:500 .95rem var(--f-ui);background:#fff;color:var(--rose);border:1px solid #f0c7d2;border-radius:999px;padding:10px 16px;cursor:pointer}
@@ -82,15 +90,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
       <path d="M75 23 C62 14 64 5 70 5 C73 5 75 8 75 10 C75 8 77 5 80 5 C86 5 88 14 75 23Z" fill="#c23a5b"/>
     </svg>
     <p id="msg" aria-live="polite"></p>
-    <div class="sign" id="sign">— <span id="vFrom">anh</span></div>
+    <div class="sign" id="sign" hidden><span id="vFrom"></span></div>
   </article>
 </div>
 
 <canvas id="front" aria-hidden="true"></canvas>
 
 <div class="player" id="player">
-  <a class="pill sp" href="https://open.spotify.com/track/1fzAuUVbzlhZ1lJAx9PtY6" target="_blank" rel="noopener">♪ Nghe “Daylight” trên Spotify</a>
+  <button class="mbtn" id="mbtn" aria-label="Nhạc" aria-expanded="false">♪</button>
+  <div class="pbox" id="pbox"><a class="pill sp" href="https://open.spotify.com/track/1fzAuUVbzlhZ1lJAx9PtY6" target="_blank" rel="noopener">Nghe “Daylight” trên Spotify</a></div>
 </div>
+
+<div class="hint" id="musicHint" hidden>♪ Chạm vào màn hình để bật nhạc</div>
 
 <div class="ctrl">
   <button class="pill" id="openEd">✎ Sửa lời chúc</button>
@@ -101,7 +112,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
   <label>Tên người nhận<input id="fName" maxlength="40"></label>
   <div class="row2">
     <label>Tuổi<input id="fAge" type="number" min="1" max="120"></label>
-    <label>Người gửi<input id="fFrom" maxlength="40"></label>
+    <input id="fFrom" hidden>
   </div>
   <label>Lời chúc<textarea id="fMsg"></textarea></label>
   <div class="actions">
@@ -118,12 +129,13 @@ const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* ---------- Lời chúc ---------- */
 const DEF={name:"Giang Pham",age:"21",from:"",
 msg:"Hellu người sinh nhật cùng tháng\n\nHy vọng em có một ngày sinh nhật thật là ý nghĩa và cảm thấy mình được yêu thương. Bởi vì em được yêu thương thật, Chúa yêu em và những người Ngài đặt xung quanh em cũng yêu thương em...\n\nHave a blessed 21"};
-const KEY="bday-giang-21";let st={...DEF};
+const KEY="bday-giang-21b";let st={...DEF};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st={...st,...s}}catch(e){}
 try{const q=new URLSearchParams(location.search),m={n:"name",a:"age",m:"msg",f:"from"};for(const k in m)if(q.has(k))st[m[k]]=q.get(k)}catch(e){}
 let typing=null,opened=false;
 function render(full){
   $("vName").textContent=st.name||"Em";
+  const a=String(st.age||"").replace(/\D/g,"");$("vAge").textContent=a?`Tuổi ${a} của em`:"";
   $("vFrom").textContent=st.from||"";
   if(full){clearInterval(typing);typing=null;$("msg").textContent=st.msg;$("sign").classList.add("show")}
 }
@@ -151,8 +163,27 @@ try{if(/github\.io$/.test(location.hostname)&&!new URLSearchParams(location.sear
 // Spotify chỉ nhúng được trên trang web thường (GitHub Pages); trong bản xem trước hiện nút mở Spotify.
 const TRACK="1fzAuUVbzlhZ1lJAx9PtY6";
 if(/github\.io$|^localhost$|^127\.|^$/.test(location.hostname)){
-  $("player").innerHTML=`<iframe title="Daylight - Taylor Swift" src="https://open.spotify.com/embed/track/${TRACK}?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+  // Trình duyệt chặn tự phát nhạc có tiếng, nên nhạc bật ở lần chạm/nhấn đầu tiên vào trang.
+  $("pbox").innerHTML='<div id="spEmbed"></div>';
+  let spCtrl=null,wantPlay=false,started=false;
+  const hint=$("musicHint");hint.hidden=false;
+  const hideHint=()=>{hint.classList.add("gone");setTimeout(()=>hint.hidden=true,800)};
+  window.onSpotifyIframeApiReady=api=>{
+    api.createController($("spEmbed"),{uri:"spotify:track:"+TRACK,width:"100%",height:80},c=>{
+      spCtrl=c;c.addListener("playback_update",e=>{const on=e&&e.data&&!e.data.isPaused;$("mbtn").classList.toggle("on",!!on);if(on&&!started){started=true;hideHint()}});
+      if(wantPlay)c.play();
+    });
+  };
+  const sc=document.createElement("script");sc.src="https://open.spotify.com/embed/iframe-api/v1";sc.async=true;document.head.appendChild(sc);
+  const kick=e=>{if(e.target.closest&&e.target.closest(".drawer,.ctrl"))return;wantPlay=true;if(spCtrl)spCtrl.play();
+    removeEventListener("pointerdown",kick);removeEventListener("keydown",kick);setTimeout(()=>{if(!hint.hidden)hideHint()},2500)};
+  addEventListener("pointerdown",kick);addEventListener("keydown",kick);
 }
+
+// nút ♪: trên điện thoại bấm để mở/đóng trình phát, trên máy tính để thu gọn
+$("mbtn").onclick=()=>{const p=$("player"),small=matchMedia("(max-width:640px)").matches;
+  if(small){const o=p.classList.toggle("open");$("mbtn").setAttribute("aria-expanded",o)}
+  else{const c=p.classList.toggle("closed");$("mbtn").setAttribute("aria-expanded",!c)}};
 
 /* ---------- Flower sprites ---------- */
 const TAU=Math.PI*2,rnd=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.random()*a.length|0];
