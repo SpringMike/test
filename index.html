@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html,body{margin:0}[hidden]{display:none!important}</style>
+<title>Vườn Hoa Sinh Nhật</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap">
+<style>
+/* Layout: a moonlit rose garden; the love letter sits dead centre in an arched frame, roses and peonies on every side, hearts drifting up, a Spotify player for the song. Single deliberate look (rose-garden night). */
+:root{
+  --night:#2a1222;      /* plum dusk */
+  --paper:#fff8f3;      /* letter */
+  --rose:#c23a5b;       /* name ink */
+  --gold:#c8975a;       /* foil */
+  --ink:#3b2430;
+  --muted:#8a6b77;
+  --f-script:"Great Vibes", "Brush Script MT", cursive;
+  --f-serif:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --f-ui:"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;background:var(--night);color:var(--ink);overflow:hidden}
+body{font-family:var(--f-serif);font-size:17px;line-height:1.6}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#back{z-index:0}#front{z-index:2}
+.stage{position:relative;z-index:1;height:100%;display:grid;place-items:center;padding:28px 16px}
+.card{width:min(100%,500px);max-height:100%;overflow:auto;scrollbar-width:none;text-align:center;
+  background:radial-gradient(120% 70% at 50% 0%,#fff 0%,var(--paper) 60%,#fbeee8 100%);
+  border-radius:250px 250px 30px 30px;padding:96px clamp(26px,7vw,54px) 48px;
+  box-shadow:0 0 0 1px rgba(200,151,90,.55),0 0 0 9px rgba(255,236,240,.18),0 0 90px rgba(255,170,190,.35),0 30px 80px rgba(0,0,0,.5);
+  opacity:0;transform:translateY(18px) scale(.97);transition:opacity 1.2s ease .9s,transform 1.4s cubic-bezier(.2,.8,.2,1) .9s}
+.card::-webkit-scrollbar{display:none}
+.open .card{opacity:1;transform:none}
+.card::before{content:"";position:absolute;inset:12px;border-radius:240px 240px 22px 22px;border:1px solid rgba(200,151,90,.45);pointer-events:none}
+.card{position:relative}
+.hb{font-family:var(--f-script);font-size:clamp(2.1rem,7vw,2.8rem);line-height:1;color:var(--gold);margin:0}
+.name{font-family:var(--f-script);font-size:clamp(3.4rem,13vw,5.2rem);line-height:1.05;color:var(--rose);margin:.05em 0 0;overflow-wrap:anywhere;text-wrap:balance;
+  text-shadow:0 6px 24px rgba(194,58,91,.22)}
+.age{font-family:var(--f-ui);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.orn{display:block;width:150px;height:30px;margin:18px auto 16px}
+#msg{font-style:italic;font-weight:500;font-size:clamp(1.18rem,3.9vw,1.38rem);line-height:1.65;white-space:pre-wrap;margin:0;color:var(--ink);min-height:6em;text-wrap:pretty}
+#msg .caret{display:inline-block;width:1px;height:1em;background:var(--rose);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.sign{font-family:var(--f-script);font-size:2.1rem;color:var(--rose);margin-top:14px;opacity:0;transition:opacity 1.2s}
+.sign.show{opacity:1}
+
+
+/* Controls */
+.ctrl{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;gap:8px}
+.player{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;width:min(calc(100% - 32px),340px)}
+.player iframe{display:block;width:100%;height:80px;border:0;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.player .sp{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+@media (max-width:640px){.player{bottom:calc(66px + env(safe-area-inset-bottom,0px))}}
+.pill{font:500 .88rem var(--f-ui);border:1px solid rgba(255,220,230,.35);border-radius:999px;padding:10px 16px;cursor:pointer;background:rgba(60,25,45,.55);color:#ffe3ea;backdrop-filter:blur(8px)}
+.btn{font:600 1rem var(--f-ui);border:0;border-radius:999px;padding:11px 20px;cursor:pointer;background:var(--rose);color:#fff}
+.ghost{font:500 .95rem var(--f-ui);background:#fff;color:var(--rose);border:1px solid #f0c7d2;border-radius:999px;padding:10px 16px;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(100%,400px);background:#fff;z-index:7;box-shadow:-20px 0 40px rgba(0,0,0,.35);font-family:var(--f-ui);
+  padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(24px + env(safe-area-inset-bottom,0px));overflow-y:auto;display:grid;gap:14px;align-content:start}
+.drawer h3{font-family:var(--f-script);font-weight:400;font-size:2.2rem;margin:0;color:var(--rose)}
+.drawer label{display:grid;gap:4px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.drawer input,.drawer textarea{font:400 1rem var(--f-ui);color:var(--ink);border:1px solid #efd6dd;border-radius:10px;padding:10px 12px;background:#fffafb;width:100%}
+.drawer textarea{min-height:220px;resize:vertical;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="back" aria-hidden="true"></canvas>
+
+<div class="stage">
+  <article class="card" id="card">
+    <p class="hb">Happy Birthday</p>
+    <h1 class="name" id="vName">Giang Pham</h1>
+    <div class="age" id="vAge"></div>
+    <svg class="orn" viewBox="0 0 150 30" aria-hidden="true">
+      <path d="M6 15 C30 4 48 26 66 15 M144 15 C120 4 102 26 84 15" fill="none" stroke="#c8975a" stroke-width="1.2"/>
+      <path d="M75 23 C62 14 64 5 70 5 C73 5 75 8 75 10 C75 8 77 5 80 5 C86 5 88 14 75 23Z" fill="#c23a5b"/>
+    </svg>
+    <p id="msg" aria-live="polite"></p>
+    <div class="sign" id="sign">— <span id="vFrom">anh</span></div>
+  </article>
+</div>
+
+<canvas id="front" aria-hidden="true"></canvas>
+
+<div class="player" id="player">
+  <a class="pill sp" href="https://open.spotify.com/track/1fzAuUVbzlhZ1lJAx9PtY6" target="_blank" rel="noopener">♪ Nghe “Daylight” trên Spotify</a>
+</div>
+
+<div class="ctrl">
+  <button class="pill" id="openEd">✎ Sửa lời chúc</button>
+</div>
+
+<aside class="drawer" id="drawer" hidden aria-label="Chỉnh sửa lời chúc">
+  <h3>Lời chúc của bạn</h3>
+  <label>Tên người nhận<input id="fName" maxlength="40"></label>
+  <div class="row2">
+    <label>Tuổi<input id="fAge" type="number" min="1" max="120"></label>
+    <label>Người gửi<input id="fFrom" maxlength="40"></label>
+  </div>
+  <label>Lời chúc<textarea id="fMsg"></textarea></label>
+  <div class="actions">
+    <button class="ghost" id="reset">Khôi phục mẫu</button>
+    <button class="btn" id="closeEd">Xong</button>
+  </div>
+</aside>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- Lời chúc ---------- */
+const DEF={name:"Giang Pham",age:"21",from:"Minhy",
+msg:"Hellu người sinh nhật cùng tháng\n\nHy vọng em có một ngày sinh nhật thật là ý nghĩa và cảm thấy mình được yêu thương. Bởi vì em được yêu thương thật, Chúa yêu em và những người Ngài đặt xung quanh em cũng yêu thương em...\n\nHave a blessed 21"};
+const KEY="bday-giang-21";let st={...DEF};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st={...st,...s}}catch(e){}
+try{const q=new URLSearchParams(location.search),m={n:"name",a:"age",m:"msg",f:"from"};for(const k in m)if(q.has(k))st[m[k]]=q.get(k)}catch(e){}
+let typing=null,opened=false;
+function render(full){
+  $("vName").textContent=st.name||"Em";
+  $("vFrom").textContent=st.from||"";
+  if(full){clearInterval(typing);typing=null;$("msg").textContent=st.msg;$("sign").classList.add("show")}
+}
+function typeMsg(){
+  const el=$("msg"),txt=st.msg;let i=0;el.textContent="";
+  if(reduce){render(true);return}
+  const caret=document.createElement("span");caret.className="caret";
+  const node=document.createTextNode("");el.append(node,caret);
+  typing=setInterval(()=>{i+=1;node.data=txt.slice(0,i);
+    if(i>=txt.length){clearInterval(typing);typing=null;caret.remove();$("sign").classList.add("show")}},38);
+}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const fill=()=>{$("fName").value=st.name;$("fAge").value=st.age;$("fMsg").value=st.msg;$("fFrom").value=st.from};
+[["fName","name"],["fAge","age"],["fMsg","msg"],["fFrom","from"]].forEach(([id,k])=>$(id).addEventListener("input",e=>{st[k]=e.target.value;render(true);save();layout()}));
+$("openEd").onclick=()=>{fill();$("drawer").hidden=false;$("fName").focus()};
+$("closeEd").onclick=()=>{$("drawer").hidden=true;$("openEd").focus()};
+$("reset").onclick=()=>{st={...DEF};fill();render(true);save();layout()};
+addEventListener("keydown",e=>{if(e.key==="Escape")$("drawer").hidden=true});
+$("card").addEventListener("click",()=>{if(typing)render(true)});
+render(false);
+// Trên trang đã host, ẩn nút sửa với người nhận (thêm ?edit vào link để hiện lại)
+try{if(/github\.io$/.test(location.hostname)&&!new URLSearchParams(location.search).has("edit"))$("openEd").hidden=true}catch(e){}
+
+/* ---------- Nhạc: trình phát Spotify chính thức (Daylight) ---------- */
+// Spotify chỉ nhúng được trên trang web thường (GitHub Pages); trong bản xem trước hiện nút mở Spotify.
+const TRACK="1fzAuUVbzlhZ1lJAx9PtY6";
+if(/github\.io$|^localhost$|^127\.|^$/.test(location.hostname)){
+  $("player").innerHTML=`<iframe title="Daylight - Taylor Swift" src="https://open.spotify.com/embed/track/${TRACK}?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+}
+
+/* ---------- Flower sprites ---------- */
+const TAU=Math.PI*2,rnd=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.random()*a.length|0];
+function sprite(R,fn){const c=document.createElement("canvas");const s=Math.ceil(R*2.5*2);c.width=c.height=s;const g=c.getContext("2d");g.translate(s/2,s/2);g.scale(2,2);fn(g,R);return c}
+function radial(g,R,a,b){const gr=g.createRadialGradient(0,0,0,0,0,R);gr.addColorStop(0,a);gr.addColorStop(1,b);return gr}
+function rose(g,R,[light,dark]){
+  // outer guard petals
+  for(let i=0;i<5;i++){g.save();g.rotate(i*TAU/5+rnd(-.2,.2));g.fillStyle=radial(g,R,light,dark);g.beginPath();g.ellipse(0,-R*.5,R*.5,R*.55,0,0,TAU);g.fill();g.restore()}
+  g.fillStyle=radial(g,R*.8,light,dark);g.beginPath();g.arc(0,0,R*.7,0,TAU);g.fill();
+  g.lineCap="round";
+  for(let k=0;k<7;k++){const r=R*(.66-k*.085),a0=k*1.9;
+    g.strokeStyle=`rgba(70,0,25,${.12+k*.03})`;g.lineWidth=R*.05;g.beginPath();g.arc(Math.sin(k)*R*.03,Math.cos(k)*R*.03,r,a0,a0+TAU*.62);g.stroke();
+    g.strokeStyle="rgba(255,255,255,.22)";g.lineWidth=R*.025;g.beginPath();g.arc(Math.sin(k)*R*.03-R*.015,Math.cos(k)*R*.03-R*.015,r,a0+.2,a0+TAU*.35);g.stroke()}
+}
+function peony(g,R,[light,dark]){
+  for(let ring=0;ring<4;ring++){const n=10-ring*2,d=R*(.55-ring*.13),rx=R*(.36-ring*.06),ry=R*(.42-ring*.07);
+    for(let i=0;i<n;i++){g.save();g.rotate(i*TAU/n+ring*.4+rnd(-.15,.15));g.fillStyle=radial(g,R,light,dark);
+      g.beginPath();g.ellipse(0,-d,rx,ry,0,0,TAU);g.fill();g.strokeStyle="rgba(120,30,60,.12)";g.lineWidth=1;g.stroke();g.restore()}}
+  g.fillStyle="rgba(255,230,180,.75)";g.beginPath();g.arc(0,0,R*.1,0,TAU);g.fill();
+}
+function ranunculus(g,R,[light,dark]){
+  for(let k=0;k<9;k++){const r=R*(.8-k*.085);g.fillStyle=k%2?light:dark;g.beginPath();g.arc(0,R*.02*k,r,0,TAU);g.fill()}
+}
+function breath(g,R){for(let i=0;i<26;i++){const a=rnd(0,TAU),r=Math.sqrt(Math.random())*R*.9;
+  g.fillStyle=`rgba(255,255,255,${rnd(.7,1)})`;g.beginPath();g.arc(Math.cos(a)*r,Math.sin(a)*r,R*rnd(.05,.09),0,TAU);g.fill()}}
+function shade(g,R){g.fillStyle=radial(g,R*1.1,"rgba(0,0,0,0)","rgba(40,0,20,.22)");g.beginPath();g.arc(0,0,R*1.05,0,TAU);g.fill()}
+const leafSprite=(R,col)=>sprite(R,(g)=>{const n=pick([3,4,5]);for(let i=0;i<n;i++){g.save();g.rotate(i*TAU/n+rnd(-.3,.3));const L=R*rnd(.85,1.15);
+  g.fillStyle=col;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(L*.45,-L*.3,L,0);g.quadraticCurveTo(L*.45,L*.3,0,0);g.fill();
+  g.strokeStyle="rgba(255,255,255,.14)";g.lineWidth=1;g.beginPath();g.moveTo(0,0);g.lineTo(L*.9,0);g.stroke();g.restore()}});
+const ROSES=[["#ffd3dc","#e47a95"],["#f7a6b8","#b8314f"],["#e04d6c","#7a1029"],["#fff3ec","#e9b8b0"],["#ffc7ae","#d9705a"],["#c62e4f","#5e0b20"]];
+const PEON=[["#fff0f3","#f2a3b7"],["#ffd9e2","#e0708f"],["#fff6ee","#f0c9b6"]];
+const RANU=[["#ffb7a6","#f28c7a"],["#f9c9d6","#e7a0b6"]];
+const B=40,SPR={rose:ROSES.map(c=>sprite(B,(g,R)=>{rose(g,R,c);shade(g,R)})),
+  peony:PEON.map(c=>sprite(B,(g,R)=>{peony(g,R,c);shade(g,R)})),
+  ranu:RANU.map(c=>sprite(B,(g,R)=>{ranunculus(g,R,c);shade(g,R)})),
+  breath:[0,1,2].map(()=>sprite(B,breath))};
+const W8=["rose","rose","rose","rose","peony","peony","ranu","breath","breath"];
+const LEAVES=["#3d5a48","#4f6e57","#2f4a3a","#5d7a62","#35503f"].flatMap(c=>[leafSprite(B,c),leafSprite(B,c)]);
+
+/* ---------- Layout ---------- */
+const back=$("back"),bx=back.getContext("2d"),front=$("front"),fx=front.getContext("2d");
+let W,H,dpr,items=[],frontItems=[],petals=[],hearts=[],bokeh=[],tOpen=Infinity;
+function size(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  for(const c of [back,front]){c.width=W*dpr;c.height=H*dpr;c.getContext("2d").setTransform(dpr,0,0,dpr,0,0)}
+  bokeh=Array.from({length:Math.min(34,W/28)},()=>({x:rnd(0,W),y:rnd(0,H),r:rnd(14,46),a:rnd(.05,.16),c:pick(["255,200,150","255,170,195","255,230,200"]),vx:rnd(-.08,.08),vy:rnd(-.12,-.02),ph:rnd(0,TAU)}));}
+function layout(){
+  const card=$("card"),r=card.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2,arcR=r.width/2,arcCy=r.top+arcR;
+  const inside=(x,y,pad)=>{if(x<r.left-pad||x>r.right+pad||y>r.bottom+pad||y<r.top-pad)return false;
+    if(y>=arcCy)return true;return Math.hypot(x-cx,y-arcCy)<arcR+pad};
+  items=[];const small=W<600,cell=small?40:52,maxD=Math.hypot(W,H)/2;
+  for(let y=-cell;y<H+cell;y+=cell*.8)for(let x=-cell;x<W+cell;x+=cell*.8){
+    const px=x+rnd(-12,12),py=y+rnd(-12,12);if(inside(px,py,-30))continue;
+    items.push({s:pick(LEAVES),x:px,y:py,sc:rnd(.7,1.15)*(small?.75:1),rot:rnd(0,TAU),ph:rnd(0,TAU),leaf:1,d:Math.hypot(px-cx,py-cy)})}
+  for(let y=-cell/2;y<H+cell;y+=cell)for(let x=-cell/2;x<W+cell;x+=cell){
+    const px=x+rnd(-cell*.4,cell*.4),py=y+rnd(-cell*.4,cell*.4);if(inside(px,py,-10))continue;
+    const k=pick(W8);let sc=rnd(.6,1)*(small?.7:1);if(k==="peony")sc*=1.2;if(k==="breath")sc*=.8;
+    items.push({s:pick(SPR[k]),x:px,y:py,sc,rot:rnd(0,TAU),ph:rnd(0,TAU),k,d:Math.hypot(px-cx,py-cy)})}
+  // a few baby's-breath sprays on top for depth
+  items.sort((a,b)=>(a.leaf?0:a.k==="breath"?2:1)-(b.leaf?0:b.k==="breath"?2:1)||a.y-b.y);
+  items.forEach(it=>it.start=(it.leaf?0:200)+it.d/maxD*1300+rnd(0,300));
+  frontItems=[];const k=small?.62:.85;
+  const addCluster=(x,y,n,spread,big)=>{
+    for(let i=0;i<n;i++){const a=rnd(0,TAU),d=Math.sqrt(Math.random())*spread;frontItems.push({s:pick(LEAVES),x:x+Math.cos(a)*d*1.3,y:y+Math.sin(a)*d*1.3,sc:rnd(.5,.8)*k,rot:rnd(0,TAU),ph:rnd(0,TAU),leaf:1})}
+    for(let i=0;i<n;i++){const a=rnd(0,TAU),d=Math.sqrt(Math.random())*spread;const kk=i===0&&big?"peony":pick(["rose","rose","peony","ranu"]);
+      frontItems.push({s:pick(SPR[kk]),x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,sc:rnd(.55,.9)*k*(i===0&&big?1.25:1),rot:rnd(0,TAU),ph:rnd(0,TAU)})}
+    for(let i=0;i<Math.ceil(n/2);i++){const a=rnd(0,TAU),d=rnd(.5,1.2)*spread;frontItems.push({s:pick(SPR.breath),x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,sc:rnd(.4,.6)*k,rot:rnd(0,TAU),ph:rnd(0,TAU)})}};
+  addCluster(r.left+8,r.bottom-8,7,small?26:38,1);addCluster(r.right-8,r.bottom-8,7,small?26:38,1);
+  for(const ang of [-160,-132,-48,-20]){const a=ang*Math.PI/180;addCluster(cx+Math.cos(a)*arcR,arcCy+Math.sin(a)*arcR,3,small?12:18)}
+  addCluster(cx,r.top+2,4,small?16:22,1);
+  frontItems.forEach((it,i)=>it.start=1700+i*22);
+}
+size();
+// measure the card in its final position
+const cardEl=$("card");
+function measuredLayout(){const tr=cardEl.style.transition;cardEl.style.transition="none";const t=cardEl.style.transform;cardEl.style.transform="none";layout();cardEl.style.transform=t;void cardEl.offsetWidth;cardEl.style.transition=tr}
+measuredLayout();
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{size();measuredLayout();if(opened)tOpen=performance.now()-1e5},120)});
+document.fonts&&document.fonts.ready.then(measuredLayout);
+
+/* ---------- Draw ---------- */
+const ease=t=>{t=Math.min(1,Math.max(0,t));const c=1.5;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)};
+function drawItem(g,it,now){
+  const p=reduce?1:ease((now-it.start)/800);if(p<=0)return;
+  const sway=reduce?0:Math.sin(now/1700+it.ph)*(it.leaf?.04:.06);
+  let pu=1;if(it.pulse!=null){const q=(now-it.pulse)/1100;if(q>=0&&q<1)pu=1+.22*Math.sin(Math.PI*q);}
+  const s=it.sc*p*pu,w=it.s.width/2;
+  g.save();g.translate(it.x,it.y);g.rotate(it.rot+sway+(1-p)*-.7);g.scale(s/2,s/2);g.drawImage(it.s,-w,-w);g.restore();
+}
+function heartPath(g,s){g.beginPath();g.moveTo(0,s*.35);g.bezierCurveTo(-s*1.1,-s*.35,-s*.5,-s*1.05,0,-s*.45);g.bezierCurveTo(s*.5,-s*1.05,s*1.1,-s*.35,0,s*.35);g.closePath()}
+const PC=["#f7a6b8","#ffd3dc","#e04d6c","#fff3ec","#c62e4f"];
+const mkPetal=y=>({x:rnd(0,W),y:y??rnd(-40,-10),r:rnd(5,9),c:pick(PC),vx:rnd(-.4,.4),vy:rnd(.4,1),a:rnd(0,TAU),va:rnd(-.04,.04),sw:rnd(0,TAU)});
+const mkHeart=()=>({x:rnd(0,W),y:H+rnd(10,80),s:rnd(6,14),vy:rnd(.35,.8),sw:rnd(0,TAU),c:pick(["255,120,150","255,180,200","230,60,95"]),life:1});
+/* ---------- Hiệu ứng hoa thêm ---------- */
+let bursts=[],flies=[],lastPulse=0,ringAng=0,added=0;
+const FLY="255,225,160";
+function burst(x,y,n,spd){for(let i=0;i<n;i++){const a=rnd(0,TAU),v=rnd(.6,1)*spd;
+  bursts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,r:rnd(4,8),c:pick(PC),a:rnd(0,TAU),va:rnd(-.15,.15),life:1,dec:rnd(.008,.016)})}}
+function ring(){const r=cardEl.getBoundingClientRect();const n=W<600?12:18;
+  return {cx:r.left+r.width/2,cy:r.top+r.height/2,rx:r.width/2+(W<600?14:34),ry:r.height/2+(W<600?14:30),n}}
+const ORBIT=[];for(let i=0;i<18;i++)ORBIT.push({s:pick(SPR[pick(["rose","peony","ranu","rose"])]),sc:rnd(.32,.48),rot:rnd(0,TAU),ph:rnd(0,TAU)});
+function frame(now){
+  const tt=now-tOpen;
+  // night sky
+  const gr=bx.createLinearGradient(0,0,0,H);gr.addColorStop(0,"#3b1730");gr.addColorStop(.55,"#2a1222");gr.addColorStop(1,"#170a13");
+  bx.fillStyle=gr;bx.fillRect(0,0,W,H);
+  for(const b of bokeh){b.x+=b.vx;b.y+=b.vy;if(b.y<-60){b.y=H+60;b.x=rnd(0,W)}
+    const a=b.a*(.7+.3*Math.sin(now/1200+b.ph));const g2=bx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
+    g2.addColorStop(0,`rgba(${b.c},${a})`);g2.addColorStop(1,`rgba(${b.c},0)`);bx.fillStyle=g2;bx.beginPath();bx.arc(b.x,b.y,b.r,0,TAU);bx.fill()}
+  if(opened){for(const it of items)drawItem(bx,it,tt);
+    // soft rose glow behind the letter
+    const r=cardEl.getBoundingClientRect(),gl=bx.createRadialGradient(r.left+r.width/2,r.top+r.height/2,r.width*.3,r.left+r.width/2,r.top+r.height/2,r.width*.95);
+    gl.addColorStop(0,"rgba(255,190,205,.35)");gl.addColorStop(1,"rgba(255,190,205,0)");bx.fillStyle=gl;bx.fillRect(0,0,W,H)}
+  fx.clearRect(0,0,W,H);
+  if(opened){for(const it of frontItems)drawItem(fx,it,tt);
+    for(const p of petals){p.sw+=.02;p.a+=p.va;p.x+=p.vx+Math.sin(p.sw)*.5;p.y+=p.vy;if(p.y>H+20)Object.assign(p,mkPetal());
+      fx.save();fx.translate(p.x,p.y);fx.rotate(p.a);fx.globalAlpha=.85;fx.fillStyle=p.c;fx.beginPath();fx.ellipse(0,0,p.r*.55,p.r,0,0,TAU);fx.fill();fx.restore()}
+    if(!reduce&&tt>2500&&hearts.length<Math.min(18,W/50)&&Math.random()<.04)hearts.push(mkHeart());
+    for(let i=hearts.length-1;i>=0;i--){const h=hearts[i];h.sw+=.02;h.y-=h.vy;h.x+=Math.sin(h.sw)*.4;
+      const al=Math.min(1,(H-h.y)/200)*Math.min(1,h.y/(H*.4));if(h.y<-30){hearts.splice(i,1);continue}
+      fx.save();fx.translate(h.x,h.y);fx.rotate(Math.sin(h.sw)*.2);fx.fillStyle=`rgba(${h.c},${.75*Math.max(0,al)})`;fx.shadowColor=`rgba(${h.c},.6)`;fx.shadowBlur=12;heartPath(fx,h.s);fx.fill();fx.restore()}
+    if(!reduce){
+      // vòng hoa xoay quanh lá thư
+      if(tt>2200){const R=ring(),fade=Math.min(1,(tt-2200)/1500);ringAng+=.0016;
+        for(let i=0;i<R.n;i++){const o=ORBIT[i],a=ringAng+i*TAU/R.n,bob=Math.sin(now/900+o.ph)*4;
+          const x=R.cx+Math.cos(a)*(R.rx+bob),y=R.cy+Math.sin(a)*(R.ry+bob),s=o.sc*fade*(W<600?.75:1),w=o.s.width/2;
+          fx.save();fx.globalAlpha=.95*fade;fx.translate(x,y);fx.rotate(o.rot+now/2600);fx.scale(s/2,s/2);fx.drawImage(o.s,-w,-w);fx.restore()}}
+      // hoa trong vườn thỉnh thoảng nở bừng lên
+      if(tt>2500&&now-lastPulse>260){lastPulse=now;const it=items[Math.random()*items.length|0];if(it&&!it.leaf)it.pulse=tt;}
+      // đom đóm
+      if(flies.length<Math.min(26,W/45))flies.push({x:rnd(0,W),y:rnd(0,H),ph:rnd(0,TAU),vx:rnd(-.3,.3),vy:rnd(-.3,.3),r:rnd(1.5,3)});
+      for(const f of flies){f.x+=f.vx+Math.sin(now/1300+f.ph)*.3;f.y+=f.vy+Math.cos(now/1500+f.ph)*.3;
+        if(f.x<-10)f.x=W+10;if(f.x>W+10)f.x=-10;if(f.y<-10)f.y=H+10;if(f.y>H+10)f.y=-10;
+        const al=.35+.65*Math.max(0,Math.sin(now/600+f.ph));fx.save();fx.fillStyle=`rgba(${FLY},${al})`;fx.shadowColor=`rgba(${FLY},.9)`;fx.shadowBlur=10;
+        fx.beginPath();fx.arc(f.x,f.y,f.r,0,TAU);fx.fill();fx.restore()}
+    }
+    // cánh hoa bung ra khi chạm / rê chuột
+    for(let i=bursts.length-1;i>=0;i--){const b=bursts[i];b.vy+=.05;b.vx*=.985;b.x+=b.vx;b.y+=b.vy;b.a+=b.va;b.life-=b.dec;
+      if(b.life<=0){bursts.splice(i,1);continue}
+      fx.save();fx.globalAlpha=Math.max(0,b.life);fx.translate(b.x,b.y);fx.rotate(b.a);fx.fillStyle=b.c;fx.beginPath();fx.ellipse(0,0,b.r*.55,b.r,0,0,TAU);fx.fill();fx.restore()}
+  }
+  if(!reduce||!opened)requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- Chạm để nở hoa, rê chuột rắc cánh hoa ---------- */
+addEventListener("pointerdown",e=>{
+  if(!opened||e.target.closest("button,input,textarea,a,.drawer,.player,.ctrl,#card"))return;
+  const tt=performance.now()-tOpen,x=e.clientX,y=e.clientY;
+  for(let i=0;i<3;i++)frontItems.push({s:pick(LEAVES),x:x+rnd(-14,14),y:y+rnd(-14,14),sc:rnd(.45,.7),rot:rnd(0,TAU),ph:rnd(0,TAU),leaf:1,start:tt,tap:1});
+  frontItems.push({s:pick(SPR[pick(["rose","peony","rose","ranu"])]),x,y,sc:rnd(.75,1)*(W<600?.75:1),rot:rnd(0,TAU),ph:rnd(0,TAU),start:tt+60,tap:1});
+  frontItems.push({s:pick(SPR.breath),x:x+rnd(-20,20),y:y+rnd(-20,20),sc:.5,rot:rnd(0,TAU),ph:rnd(0,TAU),start:tt+120,tap:1});
+  if(!reduce)burst(x,y,22,5);
+  added++;if(added>25){const i=frontItems.findIndex(it=>it.tap);frontItems.splice(i,5);added--}
+});
+let lastTrail=0;
+addEventListener("pointermove",e=>{if(!opened||reduce||e.pointerType!=="mouse")return;const n=performance.now();if(n-lastTrail<45)return;lastTrail=n;
+  if(bursts.length<220)burst(e.clientX,e.clientY,1,1.2)});
+
+/* ---------- Bloom on load ---------- */
+function openLetter(){
+  if(opened)return;opened=true;tOpen=performance.now();
+  document.body.classList.add("open");
+  if(!reduce)for(let i=0;i<Math.min(34,W/30);i++)petals.push(mkPetal(rnd(-H,0)));
+  setTimeout(typeMsg,reduce?0:1900);
+  if(reduce)requestAnimationFrame(frame);
+}
+requestAnimationFrame(()=>openLetter());
+})();
+</script>
+
+</body>
+</html>
